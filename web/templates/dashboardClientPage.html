@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="60">
+    <title>Панель управления - {{ .Bank.Name }}</title>
+    <!-- Подключение HTMX (используется только для некоторых запросов, если потребуется) -->
+    <script src="https://unpkg.com/htmx.org@1.9.2"></script>
+    <!-- Подключение Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+
+<header class="bg-blue-600 text-white p-4">
+    <div class="container mx-auto flex justify-between items-center">
+        <h1 class="text-xl font-bold">{{ .Bank.Name }}</h1>
+        <a href="/v1/logout/" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
+            Выход
+        </a>
+    </div>
+</header>
+
+<main class="container mx-auto p-4">
+    <div class="flex flex-col items-center space-y-6">
+        <!-- Секция счетов -->
+        <section class="w-full max-w-4xl bg-white p-6 rounded shadow text-center">
+            <h2 class="text-2xl font-bold mb-4">Мои Счета</h2>
+            <div class="space-y-4">
+                {{ range .Accounts }}
+                    <div id="account-{{ .Id }}" class="p-4 border rounded flex flex-col items-center">
+                        <div>
+                            <h3 class="text-lg font-semibold">Счет №{{ .Id }} ({{ .Currency }})</h3>
+                            <p>Баланс: {{ .Balance }}</p>
+                            <p>Статус: {{ .Status }}</p>
+                        </div>
+                        <!-- Сетка кнопок: для операций перевод, заморозка/блокировка, пополнения и снятия -->
+                        <div class="mt-4 grid grid-cols-3 gap-2">
+                            <button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                                    hx-post="/v1/client/bank/{{ $.Bank.Id }}/{{ .Id }}/freeze"
+                                    hx-target="#account-{{ .Id }}"
+                                    hx-swap="none">
+                                Заморозить
+                            </button>
+                            <button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                                    hx-post="/v1/client/bank/{{ $.Bank.Id }}/{{ .Id }}/block"
+                                    hx-target="#account-{{ .Id }}"
+                                    hx-swap="none">
+                                Заблокировать
+                            </button>
+                            <!-- Кнопка перевода изменена для открытия модального окна -->
+                            <button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                                    onclick="openTransferModal({{ .Id }})">
+                                Перевод
+                            </button>
+                            <button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                                    onclick="openWithdrawModal({{ .Id }})">
+                                Снять
+                            </button>
+                            <button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                                    onclick="openDepositModal({{ .Id }})">
+                                Положить
+                            </button>
+                        </div>
+                    </div>
+                {{ end }}
+            </div>
+            <div class="text-center mt-4">
+                <!-- Кнопка открытия нового счета -->
+                <button class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                        hx-post="/v1/client/bank/{{ $.Bank.Id }}/account/create"
+                        hx-swap="none">
+                    Открыть счет
+                </button>
+            </div>
+        </section>
+        <!-- Секция кредитов -->
+        <section class="w-full max-w-4xl bg-white p-6 rounded shadow text-center">
+            <h2 class="text-2xl font-bold mb-4">Мои Кредиты</h2>
+            <div class="space-y-4">
+                {{ range .Credits }}
+                    <div class="p-4 border rounded">
+                        <h3 class="text-lg font-semibold">Кредит №{{ .Id }}</h3>
+                        <p>Сумма: {{ .Amount }}</p>
+                        <p>Осталось: {{ .Remaining }}</p>
+                        <p>Процент: {{ .InterestRate }}%</p>
+                        <p>Срок: {{ .TermMonths }} месяцев</p>
+                        <p>Статус: {{ .Status }}</p>
+                        <p>Начало: {{ if .StartDate }}{{ .StartDate.Format "02-01-2006" }}{{ end }}</p>
+                        <p>Обновлено: {{ .UpdatedAt.Format "02-01-2006 15:04" }}</p>
+                    </div>
+                {{ else }}
+                    <p>Нет активных кредитов</p>
+                {{ end }}
+            </div>
+            <div class="text-center mt-4">
+                <button class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                        onclick="openRequestModal('credit')">
+                    Заявка на кредит
+                </button>
+            </div>
+        </section>
+
+        <!-- Секция вкладов -->
+        <section class="w-full max-w-4xl bg-white p-6 rounded shadow text-center">
+            <h2 class="text-2xl font-bold mb-4">Мои Вклады</h2>
+            <div class="space-y-4">
+                {{ range .Deposits }}
+                    <div class="p-4 border rounded">
+                        <h3 class="text-lg font-semibold">Вклад №{{ .Id }}</h3>
+                        <p>Начальная сумма: {{ .InitialAmount }}</p>
+                        <p>Текущая сумма: {{ .Amount }}</p>
+                        <p>Процент: {{ .InterestRate }}%</p>
+                        <p>Срок: {{ .TermMonths }} месяцев</p>
+                        <p>Статус: {{ .Status }}</p>
+                        <p>Начало: {{ if .StartDate }}{{ .StartDate.Format "02-01-2006" }}{{ end }}</p>
+                        <p>Обновлено: {{ .UpdatedAt.Format "02-01-2006 15:04" }}</p>
+                    </div>
+                {{ else }}
+                    <p>Нет активных вкладов</p>
+                {{ end }}
+            </div>
+            <div class="text-center mt-4">
+                <button class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                        onclick="openRequestModal('deposit')">
+                    Заявка на вклад
+                </button>
+            </div>
+        </section>
+
+        <!-- Секция рассрочек -->
+        <section class="w-full max-w-4xl bg-white p-6 rounded shadow text-center">
+            <h2 class="text-2xl font-bold mb-4">Мои Рассрочки</h2>
+            <div class="space-y-4">
+                {{ range .Installments }}
+                    <div class="p-4 border rounded">
+                        <h3 class="text-lg font-semibold">Рассрочка №{{ .Id }}</h3>
+                        <p>Сумма: {{ .Amount }}</p>
+                        <p>Осталось: {{ .Remaining }}</p>
+                        <p>Срок: {{ .TermMonths }} месяцев</p>
+                        <p>Статус: {{ .Status }}</p>
+                        <p>Начало: {{ if .StartDate }}{{ .StartDate.Format "02-01-2006" }}{{ end }}</p>
+                        <p>Обновлено: {{ .UpdatedAt.Format "02-01-2006 15:04" }}</p>
+                    </div>
+                {{ else }}
+                    <p>Нет активных рассрочек</p>
+                {{ end }}
+            </div>
+            <div class="text-center mt-4">
+                <button class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                        onclick="openRequestModal('installment')">
+                    Заявка на рассрочку
+                </button>
+            </div>
+        </section>
+
+        <!-- Секция личной информации -->
+        <section class="w-full max-w-4xl bg-white p-6 rounded shadow text-center">
+            <h2 class="text-2xl font-bold mb-4">Личная информация</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 justify-items-center">
+                <div class="text-center">
+                    <h3 class="font-semibold">Профиль Клиента</h3>
+                    <p>Имя: {{ .Client.Name }} {{ .Client.Surname }} {{ .Client.Patronymic }}</p>
+                    <p>Пользователь: {{ .Client.UserName }}</p>
+                    <p>Телефон: {{ .Client.PhoneNumber }}</p>
+                    <p>Email: {{ .Client.Email }}</p>
+                </div>
+                <div class="text-center">
+                    <h3 class="font-semibold">Банк</h3>
+                    <p>Название: {{ .Bank.Name }}</p>
+                    <p>BIC: {{ .Bank.Bic }}</p>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<footer class="bg-gray-200 text-center p-4 mt-6">
+    <p>&copy; 2025 {{ .Bank.Name }}</p>
+</footer>
+
+<!-- Модальное окно для создания заявки -->
+<div id="finRequestModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white p-8 rounded shadow-lg relative w-11/12 md:w-1/2">
+        <button onclick="closeRequestModal()" class="absolute top-2 right-2 text-red-500 text-2xl">&times;</button>
+        <h2 class="text-2xl font-bold mb-4">Новая заявка</h2>
+        <form hx-post="/v1/client/bank/{{ .Bank.Id }}/request/create"
+              hx-target="#requestResult"
+              hx-swap="innerHTML"
+              class="space-y-4">
+            <div>
+                <label for="requestType" class="block text-gray-700">Тип заявки</label>
+                <select name="requestType" id="requestType" class="mt-1 block w-full border-gray-300 rounded">
+                    <option value="credit">Кредит</option>
+                    <option value="deposit">Вклад</option>
+                    <option value="installment">Рассрочка</option>
+                </select>
+            </div>
+            <div>
+                <label for="accountId" class="block text-gray-700">Счет</label>
+                <input type="number" name="accountId" required id="accountId"
+                       class="mt-1 block w-full border-gray-300 rounded" />
+            </div>
+            <div>
+                <label for="amount" class="block text-gray-700">Сумма</label>
+                <input type="number" step="0.01" name="amount" required id="amount"
+                       class="mt-1 block w-full border-gray-300 rounded" />
+            </div>
+            <div>
+                <label for="interestRate" class="block text-gray-700">Процентная ставка</label>
+                <input type="number" step="0.01" name="interestRate" required id="interestRate"
+                       class="mt-1 block w-full border-gray-300 rounded" />
+            </div>
+            <div>
+                <label for="termMonths" class="block text-gray-700">Срок (в месяцах)</label>
+                <input type="number" name="termMonths" required id="termMonths"
+                       class="mt-1 block w-full border-gray-300 rounded" />
+            </div>
+            <div id="requestResult"></div>
+            <div class="text-right">
+                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                    Отправить заявку
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Модальное окно для пополнения счета -->
+<div id="depositModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white p-8 rounded shadow-lg relative w-11/12 md:w-1/2">
+        <button onclick="closeDepositModal()" class="absolute top-2 right-2 text-red-500 text-2xl">&times;</button>
+        <h2 class="text-2xl font-bold mb-4">Пополнение счета</h2>
+        <form id="depositForm" method="POST"
+              hx-trigger="submit"
+              hx-swap="none"
+              class="space-y-4">
+            <!-- Передаём идентификатор счета через скрытое поле -->
+            <input type="hidden" name="accountId" id="depositAccountId" value="">
+            <div>
+                <label for="depositAmount" class="block text-gray-700">Сумма для пополнения</label>
+                <input type="number" step="0.01" name="amount" required id="depositAmount"
+                       class="mt-1 block w-full border-gray-300 rounded" />
+            </div>
+            <div id="depositResult"></div>
+            <div class="text-right mt-4">
+                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                    Пополнить
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Модальное окно для снятия средств -->
+<div id="withdrawModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white p-8 rounded shadow-lg relative w-11/12 md:w-1/2">
+        <button onclick="closeWithdrawModal()" class="absolute top-2 right-2 text-red-500 text-2xl">&times;</button>
+        <h2 class="text-2xl font-bold mb-4">Снятие средств</h2>
+        <form id="withdrawForm" method="POST"
+              hx-swap="none"
+              class="space-y-4">
+            <!-- Передаём идентификатор счета через скрытое поле -->
+            <input type="hidden" name="accountId" id="withdrawAccountId" value="">
+            <div>
+                <label for="withdrawAmount" class="block text-gray-700">Сумма для снятия</label>
+                <input type="number" step="0.01" name="amount" required id="withdrawAmount"
+                       class="mt-1 block w-full border-gray-300 rounded" />
+            </div>
+            <div id="withdrawResult"></div>
+            <div class="text-right mt-4">
+                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                    Снять
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Модальное окно для перевода средств -->
+<div id="transferModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white p-8 rounded shadow-lg relative w-11/12 md:w-1/2">
+        <button onclick="closeTransferModal()" class="absolute top-2 right-2 text-red-500 text-2xl">&times;</button>
+        <h2 class="text-2xl font-bold mb-4">Перевод средств</h2>
+        <form id="transferForm" method="POST"
+              hx-trigger="submit"
+              hx-swap="none"
+              class="space-y-4">
+            <!-- Передаём идентификатор отправителя счета через скрытое поле -->
+            <input type="hidden" name="accountId" id="transferAccountId" value="">
+            <div>
+                <label for="recipientAccount" class="block text-gray-700">Номер счета получателя</label>
+                <input type="number" name="recipientAccount" required id="recipientAccount"
+                       class="mt-1 block w-full border-gray-300 rounded" />
+            </div>
+            <div>
+                <label for="transferAmount" class="block text-gray-700">Сумма перевода</label>
+                <input type="number" step="0.01" name="amount" required id="transferAmount"
+                       class="mt-1 block w-full border-gray-300 rounded" />
+            </div>
+            <div id="transferResult"></div>
+            <div class="text-right mt-4">
+                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                    Перевести
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openRequestModal(type) {
+        document.querySelector('#finRequestModal form').reset();
+        document.getElementById('requestResult').innerHTML = '';
+        document.getElementById('requestType').value = type;
+        document.getElementById('finRequestModal').classList.remove('hidden');
+    }
+
+    function closeRequestModal() {
+        document.getElementById('finRequestModal').classList.add('hidden');
+    }
+
+    function openDepositModal(accountId) {
+        const form = document.getElementById('depositForm');
+        form.reset();
+        document.getElementById('depositAccountId').value = accountId;
+        const url = '/v1/client/account/' + accountId + '/plus';
+        form.setAttribute('hx-post', url);
+        form.setAttribute('action', url);
+        htmx.process(form);
+        document.getElementById('depositModal').classList.remove('hidden');
+    }
+
+    function openWithdrawModal(accountId) {
+        const form = document.getElementById('withdrawForm');
+        form.reset();
+        document.getElementById('withdrawAccountId').value = accountId;
+        const url = '/v1/client/account/' + accountId + '/minus';
+        form.setAttribute('hx-post', url);
+        form.setAttribute('action', url);
+        htmx.process(form);
+        document.getElementById('withdrawModal').classList.remove('hidden');
+    }
+
+    function openTransferModal(accountId) {
+        const form = document.getElementById('transferForm');
+        form.reset();
+        document.getElementById('transferAccountId').value = accountId;
+        const url = '/v1/client/account/' + accountId + '/transfer';
+        form.setAttribute('hx-post', url);
+        form.setAttribute('action', url);
+        htmx.process(form);
+        document.getElementById('transferModal').classList.remove('hidden');
+    }
+
+    function closeDepositModal() {
+        document.getElementById('depositModal').classList.add('hidden');
+    }
+
+    function closeWithdrawModal() {
+        document.getElementById('withdrawModal').classList.add('hidden');
+    }
+
+    function closeTransferModal() {
+        document.getElementById('transferModal').classList.add('hidden');
+    }
+</script>
+</body>
+</html>

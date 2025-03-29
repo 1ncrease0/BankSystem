@@ -1,0 +1,50 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ваши банки</title>
+    <!-- Подключение HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.2"></script>
+    <!-- Подключение Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center min-h-screen">
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-8">Ваши банки</h1>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {{ range .filteredBanks }}
+                {{ if .Filter }}
+                    <!-- Если аккаунт существует, обычная ссылка -->
+                    <a href="/v1/client/bank/{{ .Bank.Id }}"
+                       class="block p-4 bg-white rounded shadow hover:bg-blue-50 transition">
+                        <h3 class="text-xl font-bold text-center">{{ .Bank.Name }}</h3>
+                        <p class="text-gray-600 text-center">BIC: {{ .Bank.Bic }}</p>
+                        <span class="block mt-2 text-center text-sm font-semibold text-green-600">
+                             Аккаунт существует
+                        </span>
+                    </a>
+                {{ else }}
+                    <!-- Если аккаунта нет, кликая по ссылке отправляется запрос на регистрацию -->
+                    <a href="#"
+                       hx-post="/v1/client/bank/{{ .Bank.Id }}/register"
+                       hx-target="#bank-content"
+                       hx-swap="innerHTML"
+                       class="block p-4 bg-white rounded shadow hover:bg-blue-50 transition">
+                        <h3 class="text-xl font-bold text-center">{{ .Bank.Name }}</h3>
+                        <p class="text-gray-600 text-center">BIC: {{ .Bank.Bic }}</p>
+                        <span class="block mt-2 text-center text-sm font-semibold text-red-600">
+                             Аккаунт отсутствует
+                        </span>
+                    </a>
+                {{ end }}
+            {{ end }}
+        </div>
+        <!-- Блок для динамического обновления через HTMX -->
+        <div id="bank-content" class="mt-8"></div>
+    </div>
+</div>
+</body>
+</html>

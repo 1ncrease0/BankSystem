@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель управления банка</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+</head>
+<body class="bg-gray-100">
+<div class="container mx-auto p-6">
+    <header class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold">Панель управления банка</h1>
+    </header>
+
+    <!-- Запросы на регистрацию -->
+    <section class="mb-8">
+        <h2 class="text-2xl font-semibold mb-4">Запросы на регистрацию</h2>
+        <table class="min-w-full bg-white rounded shadow overflow-hidden">
+            <thead class="bg-gray-200">
+            <tr>
+                <th class="px-4 py-2 border">ID</th>
+                <th class="px-4 py-2 border">Клиент</th>
+                <th class="px-4 py-2 border">Статус</th>
+                <th class="px-4 py-2 border">Дата создания</th>
+                <th class="px-4 py-2 border">Действия</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{ range .requests }}
+                <tr class="border-b">
+                    <td class="px-4 py-2 text-center">{{ .Id }}</td>
+                    <td class="px-4 py-2 text-center">{{ .ClientId }}</td>
+                    <td id="status-{{ .Id }}" class="px-4 py-2 text-center">{{ .Status }}</td>
+                    <td class="px-4 py-2 text-center">{{ .CreatedAt.Format "2006-01-02 15:04:05" }}</td>
+                    <td class="px-4 py-2 text-center">
+                        <button hx-post="/v1/employee/bank/{{ $.bankId }}/request/{{ .Id }}/approve"
+                                hx-target="#status-{{ .Id }}" hx-swap="innerHTML"
+                                class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">
+                            Одобрить
+                        </button>
+                        <button hx-post="/v1/employee/bank/{{ $.bankId }}/request/{{ .Id }}/reject"
+                                hx-target="#status-{{ .Id }}" hx-swap="innerHTML"
+                                class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 ml-2">
+                            Отклонить
+                        </button>
+                    </td>
+                </tr>
+            {{ else }}
+                <tr>
+                    <td colspan="5" class="text-center py-4">Нет заявок</td>
+                </tr>
+            {{ end }}
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Финансовые заявки -->
+    <section class="mb-8">
+        <h2 class="text-2xl font-semibold mb-4">Финансовые заявки (Кредиты, Рассрочки, Депозиты)</h2>
+        <table class="min-w-full bg-white rounded shadow overflow-hidden">
+            <thead class="bg-gray-200">
+            <tr>
+                <th class="px-4 py-2 border">ID</th>
+                <th class="px-4 py-2 border">Тип</th>
+                <th class="px-4 py-2 border">Клиент</th>
+                <th class="px-4 py-2 border">Сумма</th>
+                <th class="px-4 py-2 border">Ставка</th>
+                <th class="px-4 py-2 border">Срок (мес)</th>
+                <th class="px-4 py-2 border">Статус</th>
+                <th class="px-4 py-2 border">Дата создания</th>
+                <th class="px-4 py-2 border">Действия</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{ range .finRequests }}
+                <tr class="border-b">
+                    <td class="px-4 py-2 text-center">{{ .Id }}</td>
+                    <td class="px-4 py-2 text-center">
+                        {{ if eq .Type "credit" }}Кредит{{ end }}
+                        {{ if eq .Type "deposit" }}Депозит{{ end }}
+                        {{ if eq .Type "installment" }}Рассрочка{{ end }}
+                    </td>
+                    <td class="px-4 py-2 text-center">{{ .ClientId }}</td>
+                    <td class="px-4 py-2 text-center">{{ .Amount }}</td>
+                    <td class="px-4 py-2 text-center">{{ .InterestRate }}%</td>
+                    <td class="px-4 py-2 text-center">{{ .TermMonths }}</td>
+                    <td id="fin-status-{{ .Id }}" class="px-4 py-2 text-center">{{ .Status }}</td>
+                    <td class="px-4 py-2 text-center">{{ .CreatedAt.Format "2006-01-02 15:04:05" }}</td>
+                    <td class="px-4 py-2 text-center">
+                        <button hx-post="/v1/employee/bank/{{ $.bankId }}/fin-request/{{ .Id }}/approve"
+                                hx-target="#fin-status-{{ .Id }}" hx-swap="innerHTML"
+                                class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">
+                            Одобрить
+                        </button>
+                        <button hx-post="/v1/employee/bank/{{ $.bankId }}/fin-request/{{ .Id }}/reject"
+                                hx-target="#fin-status-{{ .Id }}" hx-swap="innerHTML"
+                                class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 ml-2">
+                            Отклонить
+                        </button>
+                    </td>
+                </tr>
+            {{ else }}
+                <tr>
+                    <td colspan="9" class="text-center py-4">Нет заявок</td>
+                </tr>
+            {{ end }}
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Запросы на зарплатные проекты -->
+    <section class="mb-8">
+        <h2 class="text-2xl font-semibold mb-4">Запросы на зарплатные проекты</h2>
+        <table class="min-w-full bg-white rounded shadow overflow-hidden">
+            <thead class="bg-gray-200">
+            <tr>
+                <th class="px-4 py-2 border">ID</th>
+                <th class="px-4 py-2 border">Сумма</th>
+                <th class="px-4 py-2 border">Клиентский счет</th>
+                <th class="px-4 py-2 border">Счет предприятия</th>
+                <th class="px-4 py-2 border">Статус</th>
+                <th class="px-4 py-2 border">Действия</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{ range .salaryRequests }}
+                <tr class="border-b">
+                    <td class="px-4 py-2 text-center">{{ .Id }}</td>
+                    <td class="px-4 py-2 text-center">{{ .Amount }}</td>
+                    <td class="px-4 py-2 text-center">{{ .ClientAccountId }}</td>
+                    <td class="px-4 py-2 text-center">{{ .EnterpriseAccountId }}</td>
+                    <td id="salary-status-{{ .Id }}" class="px-4 py-2 text-center">{{ .Status }}</td>
+                    <td class="px-4 py-2 text-center">
+                        <button hx-post="/v1/employee/bank/{{ $.bankId }}/salary-request/{{ .Id }}/approve"
+                                hx-target="#salary-status-{{ .Id }}" hx-swap="innerHTML"
+                                class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">
+                            Одобрить
+                        </button>
+                        <button hx-post="/v1/employee/bank/{{ $.bankId }}/salary-request/{{ .Id }}/reject"
+                                hx-target="#salary-status-{{ .Id }}" hx-swap="innerHTML"
+                                class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 ml-2">
+                            Отклонить
+                        </button>
+                    </td>
+                </tr>
+            {{ else }}
+                <tr>
+                    <td colspan="7" class="text-center py-4">Нет заявок на зарплатные проекты</td>
+                </tr>
+            {{ end }}
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Логи переводов с кнопками для отмены -->
+    <section>
+        <h2 class="text-2xl font-semibold mb-4">Логи переводов</h2>
+        <table class="min-w-full bg-white rounded shadow overflow-hidden">
+            <thead class="bg-gray-200">
+            <tr>
+                <th class="px-4 py-2 border">ID</th>
+                <th class="px-4 py-2 border">Тип</th>
+                <th class="px-4 py-2 border">Время</th>
+                <th class="px-4 py-2 border">Отправитель</th>
+                <th class="px-4 py-2 border">Получатель</th>
+                <th class="px-4 py-2 border">Сумма</th>
+                <th class="px-4 py-2 border">Действия</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{ range .logs }}
+                <tr id="log-row-{{ .Id }}" class="border-b">
+                    <td class="px-4 py-2 text-center">{{ .Id }}</td>
+                    <td class="px-4 py-2 text-center">{{ .Type }}</td>
+                    <td class="px-4 py-2 text-center">{{ .Time.Format "2006-01-02 15:04:05" }}</td>
+                    <td class="px-4 py-2 text-center">{{ .Sender }}</td>
+                    <td class="px-4 py-2 text-center">{{ .Recipient }}</td>
+                    <td class="px-4 py-2 text-center">{{ .Amount }}</td>
+                    <td class="px-4 py-2 text-center">
+                        <button hx-post="/v1/employee/bank/{{ $.bankId }}/action-log/{{ .Id }}/cancel"
+                                hx-target="#log-row-{{ .Id }}" hx-swap="outerHTML"
+                                class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+                            Отменить
+                        </button>
+                    </td>
+                </tr>
+            {{ else }}
+                <tr>
+                    <td colspan="7" class="text-center py-4">Нет логов переводов</td>
+                </tr>
+            {{ end }}
+            </tbody>
+        </table>
+    </section>
+
+</div>
+</body>
+</html>

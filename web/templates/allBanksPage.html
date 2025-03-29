@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Банки</title>
+  <!-- Подключение HTMX -->
+  <script src="https://unpkg.com/htmx.org@1.9.2"></script>
+  <!-- Подключение Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center min-h-screen">
+<div class="container mx-auto px-4 py-8">
+  <div class="max-w-4xl mx-auto">
+    <h1 class="text-3xl font-bold text-center mb-8">Банки</h1>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {{ range .Banks }}
+        <a href="/v1/employee/bank/{{ .Id }}/login"
+           class="block p-4 bg-white rounded shadow hover:bg-blue-50 transition">
+          <h3 class="text-xl font-bold text-center">{{ .Name }}</h3>
+          <p class="text-gray-600 text-center">BIC: {{ .Bic }}</p>
+        </a>
+      {{ end }}
+    </div>
+    <!-- Блок для динамического обновления через HTMX, если потребуется -->
+    <div id="bank-content" class="mt-8"></div>
+  </div>
+</div>
+</body>
+</html>
