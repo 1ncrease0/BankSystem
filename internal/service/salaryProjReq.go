@@ -25,7 +25,6 @@ func NewSalaryProjectRequestService(
 }
 
 func (s *SalaryProjectRequestService) CreateSalaryProjectRequest(req models.SalaryProjectRequest) (int, error) {
-	// Проверка существования аккаунтов
 	if _, err := s.accountService.Account(req.ClientAccountId); err != nil {
 		return 0, errors.New("client account not found")
 	}
