@@ -30,7 +30,7 @@ func NewAuthService(repo repository.Authorization) *AuthService {
 	return &AuthService{authRepo: repo}
 }
 
-// Клиентские методы
+
 
 func (s *AuthService) EnterpriseSpecialist(id int) (models.EnterpriseSpecialist, error) {
 	return s.authRepo.EnterpriseSpecialistById(id)
@@ -68,7 +68,7 @@ func (s *AuthService) GenerateClientToken(username, password string) (string, er
 	return token.SignedString([]byte(signingKey))
 }
 
-// Методы для банковского сотрудника
+
 
 func (s *AuthService) CreateBankEmployee(employee models.BankEmployee) (int, error) {
 	employee.Password = generatePasswordHash(employee.Password)
@@ -98,7 +98,6 @@ func (s *AuthService) GenerateEmployeeToken(username, password string) (string, 
 	return token.SignedString([]byte(signingKey))
 }
 
-// Методы для EnterpriseSpecialist
 
 func (s *AuthService) CreateEnterpriseSpecialist(es models.EnterpriseSpecialist) (int, error) {
 	es.Password = generatePasswordHash(es.Password)
@@ -106,13 +105,13 @@ func (s *AuthService) CreateEnterpriseSpecialist(es models.EnterpriseSpecialist)
 }
 
 func (s *AuthService) GenerateEnterpriseSpecialistToken(username, password string) (string, error) {
-	// Получаем EnterpriseSpecialist по логину и хешированному паролю
+
 	es, err := s.authRepo.EnterpriseSpecialist(username, generatePasswordHash(password))
 	if err != nil {
 		return "", err
 	}
 	userId := es.Id
-	role := "enterprise_specialist" // можно изменить в зависимости от требований
+	role := "enterprise_specialist" 
 
 	now := time.Now()
 	claims := &TokenClaims{
