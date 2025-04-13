@@ -50,7 +50,7 @@ func (h *Handler) RegisterEnterpriseSpecialist(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, "/v1/enterprise_specialist/login")
 }
 func (h *Handler) LoginEnterpriseSpecialist(c *gin.Context) {
-	enterpriseIDStr := c.PostForm("enterpriseId") // Изменено здесь
+	enterpriseIDStr := c.PostForm("enterpriseId") 
 	username := c.PostForm("username")
 	password := c.PostForm("password")
 
