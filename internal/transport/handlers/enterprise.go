@@ -8,18 +8,18 @@ import (
 )
 
 func (h *Handler) SalaryProjectCreate(c *gin.Context) {
-	// Парсинг и валидация формы
+	
 	clientAccountID := c.PostForm("client_account_id")
 	enterpriseAccountID := c.PostForm("enterprise_account_id")
 	amountStr := c.PostForm("amount")
 
-	// Проверка на пустые значения
+	
 	if clientAccountID == "" || enterpriseAccountID == "" || amountStr == "" {
 		c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": "Все поля обязательны"})
 		return
 	}
 
-	// Конвертация значений с проверкой ошибок
+	
 	clientID, err := strconv.Atoi(clientAccountID)
 	if err != nil {
 		c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": "Неверный ID клиента"})
@@ -38,7 +38,6 @@ func (h *Handler) SalaryProjectCreate(c *gin.Context) {
 		return
 	}
 
-	// Создание запроса с использованием каноничных имён полей
 	req := models.SalaryProjectRequest{
 		ClientAccountId:     clientID,
 		EnterpriseAccountId: enterpriseID,
@@ -46,13 +45,13 @@ func (h *Handler) SalaryProjectCreate(c *gin.Context) {
 		Status:              models.RequestUnderConsideration,
 	}
 
-	// Вызов сервиса для создания зарплатного проекта
+
 	if _, err := h.services.SalaryProjectRequest.CreateSalaryProjectRequest(req); err != nil {
 		c.HTML(http.StatusInternalServerError, "error.html", gin.H{"error": "Ошибка создания: " + err.Error()})
 		return
 	}
 
-	// Перенаправление на панель управления
+	
 	c.Redirect(http.StatusFound, "/v1/enterprise_specialist/dashboard")
 }
 func (h *Handler) enterpriseTransfer(c *gin.Context) {
