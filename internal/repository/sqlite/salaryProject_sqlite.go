@@ -10,13 +10,13 @@ type SalaryProjectSQLite struct {
 	db *sqlx.DB
 }
 
-// NewSalaryProjectSQLite создаёт новый репозиторий для работы с зарплатным проектом
+
 func NewSalaryProjectSQLite(db *sqlx.DB) *SalaryProjectSQLite {
 
 	return &SalaryProjectSQLite{db: db}
 }
 
-// CreateSalaryProject добавляет новую запись о зарплатном проекте
+
 func (s *SalaryProjectSQLite) CreateSalaryProject(salaryProject models.SalaryProject) (int, error) {
 	query := `
 		INSERT INTO salary_project (amount, client_account_id, enterprise_account_id)
@@ -33,7 +33,7 @@ func (s *SalaryProjectSQLite) CreateSalaryProject(salaryProject models.SalaryPro
 	return int(id), nil
 }
 
-// GetSalaryProjectById получает запись зарплатного проекта по её идентификатору
+
 func (s *SalaryProjectSQLite) GetSalaryProjectById(id int) (models.SalaryProject, error) {
 	query := `
 		SELECT id, amount, client_account_id, enterprise_account_id
@@ -48,7 +48,7 @@ func (s *SalaryProjectSQLite) GetSalaryProjectById(id int) (models.SalaryProject
 	return salaryProject, nil
 }
 
-// GetSalaryProjectsByEnterprise получает все записи зарплатного проекта для указанного счета предприятия
+
 func (s *SalaryProjectSQLite) GetSalaryProjectsByEnterprise(enterpriseAccountId int) ([]models.SalaryProject, error) {
 	query := `
 		SELECT id, amount, client_account_id, enterprise_account_id
@@ -63,7 +63,7 @@ func (s *SalaryProjectSQLite) GetSalaryProjectsByEnterprise(enterpriseAccountId 
 	return salaryProjects, nil
 }
 
-// GetSalaryProjectsByClient получает все записи зарплатного проекта для указанного счета клиента
+
 func (s *SalaryProjectSQLite) GetSalaryProjectsByClient(clientAccountId int) ([]models.SalaryProject, error) {
 	query := `
 		SELECT id, amount, client_account_id, enterprise_account_id
@@ -78,7 +78,7 @@ func (s *SalaryProjectSQLite) GetSalaryProjectsByClient(clientAccountId int) ([]
 	return salaryProjects, nil
 }
 
-// DeleteSalaryProject удаляет запись зарплатного проекта по её идентификатору
+
 func (s *SalaryProjectSQLite) DeleteSalaryProject(id int) error {
 	query := `
 		DELETE FROM salary_project
