@@ -68,7 +68,7 @@ func (h *Handler) employeeDashboardPage(c *gin.Context) {
 		"requests":       requests,
 		"finRequests":    finRequests,
 		"salaryRequests": salaryRequests,
-		"logs":           logs, // Передаем логи в шаблон
+		"logs":           logs, 
 	}
 
 	c.HTML(http.StatusOK, "dashboardEmployeePage.html", data)
@@ -126,7 +126,6 @@ func (h *Handler) approveRegRequest(c *gin.Context) {
 	bankIdStr := c.Param("id")
 	reqIdStr := c.Param("reqId")
 
-	// Преобразование параметров
 	bankId, err := strconv.Atoi(bankIdStr)
 	if err != nil {
 		c.String(http.StatusBadRequest, "Неверный ID банка")
