@@ -37,11 +37,11 @@ func (s *AccountService) TransferMoney(from, to int, amount float64) error {
 		return err
 	}
 	bankId := aaa.BankId
-	// Выполнение перевода
+	
 	if err := s.repo.TransferMoney(fromAccountId, toAccountId, amount); err != nil {
 		return err
 	}
-	// Создание записи в журнале действий
+
 	logEntry := models.ActionLogUnit{
 		Type:      models.LogTransfer,
 		Time:      time.Now(),
@@ -58,18 +58,18 @@ func (s *AccountService) TransferMoney(from, to int, amount float64) error {
 }
 
 func (s *AccountService) CancelTransfer(logID, fromAccountId, toAccountId int, amount float64) error {
-	// Откат перевода
+
 	if err := s.repo.RollbackTransferMoney(fromAccountId, toAccountId, amount); err != nil {
 		return err
 	}
-	// Удаление записи из журнала действий
+	
 	if err := s.logRepo.Delete(logID); err != nil {
 		return err
 	}
 	return nil
 }
 
-// Остальные методы сервиса остаются без изменений.
+
 
 func (s *AccountService) PutMoney(accountId int, amount float64) error {
 	if amount <= 0 {
